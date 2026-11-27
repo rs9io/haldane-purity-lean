@@ -29,6 +29,14 @@ jobs:
         run: |
           set -euo pipefail
           lake exe cache get
+          # Build the four kernel-checked corner certificates sequentially to stay well within
+          # standard GitHub runner RAM before building the remaining modules.
+          lake build PurityBootstrap.CandidateE.Corner15_47
+          lake build PurityBootstrap.CandidateE.Corner15_48
+          lake build PurityBootstrap.CandidateE.Corner16_47
+          lake build PurityBootstrap.CandidateE.Corner16_48
+          lake build PurityBootstrap.Spin1Interval
+          lake build PurityBootstrap.Ising2DGap
           lake build
 
       - name: Run fail-closed Lean 4 axiom and module audit
