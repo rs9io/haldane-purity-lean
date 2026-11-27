@@ -7,8 +7,8 @@ on:
     branches: [main]
 
 jobs:
-  verify-lean-and-certificates:
-    name: Build Lean 4, Axiom Audit & All Candidate A Verifiers
+  verify-spin1-and-verifiers:
+    name: Build Spin-1 & 2D Lean 4 Modules + All Candidate A Verifiers
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,31 +25,18 @@ jobs:
           rm -f elan-init.sh
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Fetch Mathlib prebuilt oleans and build all 29 Lean 4 modules
+      - name: Fetch Mathlib cache and build Spin-1 (point + interval) & 2D TFIM modules
         run: |
           set -euo pipefail
           lake exe cache get
-          # Build the four kernel-checked corner certificates sequentially to stay well within
-          # standard GitHub runner RAM before building the remaining modules.
-          lake build PurityBootstrap.CandidateE.Corner15_47
-          lake build PurityBootstrap.CandidateE.Corner15_48
-          lake build PurityBootstrap.CandidateE.Corner16_47
-          lake build PurityBootstrap.CandidateE.Corner16_48
-          lake build PurityBootstrap.Spin1Interval
-          lake build PurityBootstrap.Ising2DGap
-          lake build
-
-      - name: Run fail-closed Lean 4 axiom and module audit
-        run: |
-          set -euo pipefail
-          lake env lean scripts/check_axioms.lean
+          lake build PurityBootstrap.Spin1Interval PurityBootstrap.Ising2DGap
 
       - name: Verify Candidate A 88/88 thermal enclosures (pure integer/rational, stdlib only)
         run: |
           set -euo pipefail
           python3 -O scripts/verify_candidate_a_all88.py
 
-      - name: Set up Python environment for open7 Cholesky and 160-bit Arb L=112 trial verifiers
+      - name: Set up Python environment for open7 residual and 160-bit Arb L=112 trial verifiers
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
@@ -70,3 +57,78 @@ jobs:
         run: |
           set -euo pipefail
           .ci-venv/bin/python -O scripts/check_trial.py
+
+  build-corner-certificates:
+    name: Build Candidate E ${{ matrix.corner }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        corner: [Corner15_47, Corner15_48, Corner16_47, Corner16_48]
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install elan and Lean toolchain
+        run: |
+          set -euo pipefail
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          rm -f elan-init.sh
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch Mathlib cache and build ${{ matrix.corner }}
+        run: |
+          set -euo pipefail
+          lake exe cache get
+          lake build PurityBootstrap.CandidateE.${{ matrix.corner }}
+
+      - name: Upload ${{ matrix.corner }} build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: corner-${{ matrix.corner }}
+          retention-days: 1
+          path: |
+            .lake/build/lib/lean/PurityBootstrap/CandidateE/${{ matrix.corner }}.*
+            .lake/build/ir/PurityBootstrap/CandidateE/${{ matrix.corner }}.*
+
+  full-closure-axiom-audit:
+    name: Full 29-Module Build & Fail-Closed Axiom Audit
+    needs: [verify-spin1-and-verifiers, build-corner-certificates]
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install elan and Lean toolchain
+        run: |
+          set -euo pipefail
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          rm -f elan-init.sh
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch Mathlib cache and build shared prerequisites
+        run: |
+          set -euo pipefail
+          lake exe cache get
+          lake build PurityBootstrap.CandidateE.Basis
+
+      - name: Download all four verified Candidate E corner artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: corner-*
+          merge-multiple: true
+          path: .
+
+      - name: Build full 29-module closure and run fail-closed axiom audit
+        run: |
+          set -euo pipefail
+          lake build
+          lake env lean scripts/check_axioms.lean
