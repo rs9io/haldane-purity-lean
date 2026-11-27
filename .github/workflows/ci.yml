@@ -8,7 +8,7 @@ on:
 
 jobs:
   verify-spin1-and-verifiers:
-    name: Build Spin-1 & 2D Lean 4 Modules + All Candidate A Verifiers
+    name: Build Spin-1, 2D TFIM & Prereqs + All Candidate A Verifiers
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -25,11 +25,23 @@ jobs:
           rm -f elan-init.sh
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Fetch Mathlib cache and build Spin-1 (point + interval) & 2D TFIM modules
+      - name: Fetch Mathlib cache and build Spin-1, 2D TFIM, and shared Candidate E prerequisites
         run: |
           set -euo pipefail
           lake exe cache get
-          lake build PurityBootstrap.Spin1Interval PurityBootstrap.Ising2DGap
+          lake build PurityBootstrap.Spin1Interval PurityBootstrap.Ising2DGap PurityBootstrap.CandidateE.Basis PurityBootstrap.IsingMPS
+
+      - name: Archive shared .lake/build artifacts for downstream jobs
+        run: |
+          set -euo pipefail
+          tar -cf prereqs-build.tar .lake/build
+
+      - name: Upload shared build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: prereqs-build
+          retention-days: 1
+          path: prereqs-build.tar
 
       - name: Verify Candidate A 88/88 thermal enclosures (pure integer/rational, stdlib only)
         run: |
@@ -60,6 +72,7 @@ jobs:
 
   build-corner-certificates:
     name: Build Candidate E ${{ matrix.corner }}
+    needs: [verify-spin1-and-verifiers]
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
@@ -80,20 +93,29 @@ jobs:
           rm -f elan-init.sh
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Fetch Mathlib cache and build ${{ matrix.corner }}
+      - name: Download shared prerequisites
+        uses: actions/download-artifact@v4
+        with:
+          name: prereqs-build
+          path: .
+
+      - name: Fetch Mathlib cache, unpack shared prerequisites, and build ${{ matrix.corner }}
         run: |
           set -euo pipefail
           lake exe cache get
+          tar -xf prereqs-build.tar
+          rm -f prereqs-build.tar
           lake build PurityBootstrap.CandidateE.${{ matrix.corner }}
+          tar -cf corner-${{ matrix.corner }}.tar \
+            .lake/build/lib/lean/PurityBootstrap/CandidateE/${{ matrix.corner }}.* \
+            .lake/build/ir/PurityBootstrap/CandidateE/${{ matrix.corner }}.*
 
-      - name: Upload ${{ matrix.corner }} build artifacts
+      - name: Upload ${{ matrix.corner }} build archive
         uses: actions/upload-artifact@v4
         with:
           name: corner-${{ matrix.corner }}
           retention-days: 1
-          path: |
-            .lake/build/lib/lean/PurityBootstrap/CandidateE/${{ matrix.corner }}.*
-            .lake/build/ir/PurityBootstrap/CandidateE/${{ matrix.corner }}.*
+          path: corner-${{ matrix.corner }}.tar
 
   full-closure-axiom-audit:
     name: Full 29-Module Build & Fail-Closed Axiom Audit
@@ -114,21 +136,19 @@ jobs:
           rm -f elan-init.sh
           echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
 
-      - name: Fetch Mathlib cache and build shared prerequisites
-        run: |
-          set -euo pipefail
-          lake exe cache get
-          lake build PurityBootstrap.CandidateE.Basis
-
-      - name: Download all four verified Candidate E corner artifacts
+      - name: Download shared prerequisites and all four verified Candidate E corner archives
         uses: actions/download-artifact@v4
         with:
-          pattern: corner-*
           merge-multiple: true
           path: .
 
-      - name: Build full 29-module closure and run fail-closed axiom audit
+      - name: Fetch Mathlib cache, unpack all artifacts, build full 29-module closure, and run fail-closed axiom audit
         run: |
           set -euo pipefail
+          lake exe cache get
+          tar -xf prereqs-build.tar
+          for f in corner-*.tar; do tar -xf "$f"; done
+          rm -f prereqs-build.tar corner-*.tar
+          ls -lh .lake/build/lib/lean/PurityBootstrap/CandidateE/Corner*.olean
           lake build
           lake env lean scripts/check_axioms.lean
