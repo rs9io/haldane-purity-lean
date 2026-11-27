@@ -1,0 +1,331 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[margin=0.95in]{geometry}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{enumitem}
+\usepackage{microtype}
+
+\emergencystretch=1.5em
+\newcommand{\id}[1]{{\small\nolinkurl{#1}}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!60!black,
+  citecolor=blue!60!black,
+  urlcolor=blue!60!black,
+  pdftitle={A Lean 4 Formalization of the Finite-Temperature Purity Bootstrap and the Anisotropic Spin-1 Haldane Gap},
+  pdfauthor={Dale Richards-Smith}
+}
+
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{remark}[theorem]{Remark}
+
+\newcommand{\Tr}{\operatorname{Tr}}
+\newcommand{\diag}{\operatorname{diag}}
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\C}{\mathbb{C}}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+
+\title{\textbf{A Lean 4 Formalization of the Finite-Temperature Purity Bootstrap\\and the Anisotropic Spin-1 Haldane Gap}}
+\author{Dale Richards-Smith\\
+RS9 Systems (\href{https://rs9.com.au}{rs9.com.au})\\
+\texttt{lab@rs9.com.au}}
+\date{November 27, 2026}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+We present a Lean~4 (\id{v4.36.0}, Mathlib \id{v4.36.0}) formalization of the finite-temperature purity bootstrap for quantum spin Hamiltonians across 29 modules and 1{,}781 verified theorem constants (1{,}468 under \id{PurityBootstrap.*}) with zero \id{sorry}, zero \id{admit}, zero \id{native_decide}, and zero custom axioms---strictly within standard axioms \id{[propext, Classical.choice, Quot.sound]}.
+Our primary physical result extends the periodic spin-1 Haldane gap proof from the isotropic point ($D = 0$) to an explicit anisotropic point ($D = 1/4$) and a continuous interval around it inside the Haldane phase, while eliminating all abstract transfer-operator and signed-sector-moment hypotheses inside Lean~4's kernel:
+\begin{enumerate}[leftmargin=1.8em,itemsep=2pt]
+  \item \textbf{Anisotropic Spin-1 Haldane Gap at $(\Delta, D) = (1, 1/4)$ and Continuous Interval:} Breaking $SO(3) \to O(2)$ removes the isotropic representation-theory shortcut. Using a finite-$M$ no-collision $O(2)/SO(3)$-equivariant real symmetric transfer matrix, exact cycle contraction, first-order Trotter convergence, subsequential signed-moment convergence under a uniform Hilbert--Schmidt $\ell^2$ bound, and real $D_4 + R_z(\pi/4)$ sector projections inside Lean~4, we reduce the infinite-family gap to \emph{only} 88 finite physical thermal trace enclosures ($n=4\ldots 14$, $b \in \{31/2, 23\}$, seams $\{I, R_z(\pi), R_x(\pi), R_z(\pi/2)\}$) and a single $L=112$ real variational Rayleigh witness. From those finite premises, Lean~4 proves a simple ground energy (multiplicity~1 in \id{charpoly.roots}) and finite-volume spectral gap $\gamma_L > \frac{\log 20}{368} \approx 0.00814058$ on the concrete $3^L \times 3^L$ physical spin-1 Hamiltonian $H_{\mathrm{spin1}}(L, 1/4, I)$ for every finite even $L \ge 896$. By proving operator-monotone trace comparison and uniform purity transport in Lean~4 (\id{Spin1Interval.lean}), the \emph{exact same} center inputs further imply a simple ground energy and uniform gap $\gamma_L > \frac{\log 20}{736} \approx 0.00407029$ for every continuous anisotropy $D \in [0.249999, 0.250001]$ and every even $L \ge 1792$ (preserving $L \ge 896$ and $\gamma_L > \frac{\log 20}{368}$ on $D \in [0.2499999, 0.2500001]$). All 88 thermal enclosures are certified externally from archived 256-bit integer totals in exact rational arithmetic (worst endpoint distance $1.245 \times 10^{-6} < 10^{-5}$, 87.55\% safety margin), alongside an exact \id{int64}-residual 7-site open-chain lower bound and a 160-bit Arb enclosure of a $\chi = 32$ periodic MPS trial witness at $L = 112$.
+  \item \textbf{Isotropic Spin-1 Haldane Gap at $(\Delta, D) = (1, 0)$ (OpenAI Source~1):} Applying the same concrete transfer and $D_2 \rtimes C_3$ projection bridge inside Lean~4 yields a simple ground energy and gap $\gamma_L > \frac{\log 20}{784}$ on $H_{\mathrm{spin1}}(L, 0, I)$ for every finite even $L \ge 2304$, taking only the 18 concrete physical thermal trace enclosures ($n = 4\ldots 12$, $b = 49/4$, seams $\{I, R_x(\pi)\}$) and a single $L = 72$ variational Rayleigh witness.
+  \item \textbf{Zero-Oracle Formal-Verification Benchmarks (1D Interacting Ising \& 2D TFIM):} To validate our 1D symmetry-twist and 2D purity-bootstrap libraries end-to-end with zero external numerical inputs, we prove two completely self-contained perturbative benchmark theorems directly inside Lean~4's kernel: (a) a multiplet and gap theorem for the non-integrable 1D interacting Ising ring $H_\ell(g, h)$ across $(g, h) \in [\frac{15}{128}, \frac{16}{128}] \times [\frac{47}{128}, \frac{48}{128}]$ for all finite even $\ell \ge 64$; and (b) a finite-volume gap theorem ($\gamma_L > \frac{\log 2}{5} \approx 0.138629$, simple ground energy) for the concrete $2^{L^2} \times 2^{L^2}$ 2D transverse-field Ising square torus across $|J_x|, |J_y| \le 1/192$ for all finite even $L \ge 2$. While the existence of a gap in these perturbative Ising regimes is classically known, these theorems verify the full 1D twist and 2D Lie--Trotter bootstrap pipeline with zero external oracles (with the 2D benchmark additionally maintaining a data-free import closure).
+\end{enumerate}
+\end{abstract}
+
+\vspace{0.5em}
+\noindent\fcolorbox{black!20}{black!3}{%
+\begin{minipage}{\dimexpr\textwidth-2\fboxsep-2\fboxrule\relax}
+\small
+\textbf{Plain-English Summary.}
+Imagine a circular necklace made of atomic magnets, where each magnet can point up, sideways, or down and prefers to point opposite to its neighbors. In 1983, physicist F.~Duncan~M.~Haldane predicted a surprising quantum effect: even as the necklace grows arbitrarily long, there is a permanent \emph{energy gap}---a fixed minimum cost to excite the ring above its lowest-energy state---so the gap never shrinks to zero.
+
+Checking that directly by computer is impossible for large rings: a necklace of 896 spin-1 magnets has $3^{896} > 10^{427}$ possible states, far more than the number of atoms in the observable universe. Instead, the \emph{finite-temperature purity bootstrap} uses a mathematical doubling trick: tight measurements on tiny rings (up to 14 magnets) and one energy benchmark on a 112-magnet ring feed a pair of coupled inequalities that snowball from length $56 \to 112 \to 224 \to 448 \to 896$ and lock in a positive energy gap for \emph{every} larger even ring.
+
+In this work, we formalize the entire proof machinery inside \textbf{Lean~4}, a strict mathematical proof checker that verifies every logical step from foundational axioms without trusting human algebra. Our main physics result extends the Haldane gap proof away from the high-symmetry isotropic point ($D = 0$) to an explicit anisotropic point inside the Haldane phase ($D = 1/4$, every even length $L \ge 896$) and to a continuous interval $D \in [0.249999, 0.250001]$ around it ($L \ge 1792$, with zero extra simulations), eliminating every abstract transfer-operator assumption inside Lean~4 (for both $D = 1/4$ and $D = 0$) so that only finite exact-arithmetic tiny-ring measurements and a single energy check remain outside the kernel. To stress-test our reusable 1D and 2D Lean~4 library with zero external numbers, we also include two self-contained formal-verification benchmarks in perturbative regimes where gaps are already classically known: a non-integrable 1D interacting Ising chain and a weak-coupling 2D transverse-field Ising torus.
+\end{minipage}%
+}
+\vspace{0.6em}
+
+\section{Introduction}
+Proving uniform spectral gaps for infinite families of interacting quantum many-body Hamiltonians is difficult because the Hilbert-space dimension grows exponentially with system size (e.g., $3^L$ basis configurations for a spin-1 chain of length $L$, exceeding $10^{427}$ at $L = 896$).
+The \emph{finite-temperature purity bootstrap}, introduced in the September~24, 2026 periodic spin-1 Haldane gap preprint~\cite{openai2026haldane} and extended to symmetry-twisted sectors and higher spatial dimensions by Grover~\cite{grover2026}, overcomes this exponential barrier by turning finite-volume thermal trace enclosures and a single variational energy witness into coupled spatial- and temporal-doubling purity contractions that hold for all sufficiently large finite even rings.
+
+While the purity bootstrap reduces an infinite family of spectral problems to finite arithmetic checks, its end-to-end rigor rests on two delicate layers: (i) the algebraic, analytic, and representation-theoretic transfer-operator machinery linking physical Gibbs traces $\Tr(e^{-b(H_n + a n I)})$ to signed sector-moment expansions across both even and odd ring lengths, and (ii) the exact interval arithmetic and coupled bootstrap inequalities themselves.
+In this work, we formalize \emph{both} layers inside Lean~4's pure kernel in the public repository \href{https://github.com/rs9io/haldane-purity-lean}{\id{rs9io/haldane-purity-lean}} (with an interactive visual companion at \url{https://rs9.com.au/haldane-gap}), apply them to certify an explicit anisotropic spin-1 Haldane point ($D = 1/4$) and continuous interval around it alongside the isotropic point ($D = 0$), and validate both the 1D symmetry-twist and 2D purity-bootstrap modules end-to-end on self-contained perturbative Ising benchmarks.
+
+\begin{table}[t]
+\centering
+\footnotesize
+\setlength{\tabcolsep}{3.5pt}
+\renewcommand{\id}[1]{{\scriptsize\nolinkurl{#1}}}
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}p{2.3cm}>{\raggedright\arraybackslash}p{3.65cm}>{\raggedright\arraybackslash}p{2.65cm}>{\raggedright\arraybackslash}p{2.2cm}>{\raggedright\arraybackslash}X@{}}
+\toprule
+\textbf{Model / Role} & \textbf{Lean Declaration} & \textbf{Scope} & \textbf{External Inputs} & \textbf{Proven Spectral Bound} \\
+\midrule
+Anisotropic Spin-1 ($D=\frac{1}{4}$, main result) & \id{candidate_a_physical_spin1_charpoly_gap_896} & Concrete $3^L\times 3^L$ $H_{\mathrm{spin1}}$, even $L \ge 896$ & 88 $Z_{\mathrm{spin1}}$ boxes ($n\le 14$) + 1 trial ($L=112$) & Simple ground energy; $\gamma_L > \frac{\log 20}{368} \approx 0.00814058$ \\
+\addlinespace
+Anisotropic Spin-1 Interval (main corollary) & \id{candidate_a_physical_spin1_interval_charpoly_gap_1792} & All $D \in [0.249999, 0.250001]$, even $L \ge 1792$ & Same 88 $D=\frac{1}{4}$ boxes + 1 trial (zero new traces) & Simple ground energy; $\gamma_L > \frac{\log 20}{736} \approx 0.00407029$ \\
+\addlinespace
+Isotropic Spin-1 ($D=0$, Source~1 bridge) & \id{source1_physical_spin1_charpoly_gap_2304} & Concrete $3^L\times 3^L$ $H_{\mathrm{spin1}}$, even $L \ge 2304$ & 18 $Z_{\mathrm{spin1}}$ boxes ($n\le 12$) + 1 trial ($L=72$) & Simple ground energy; $\gamma_L > \frac{\log 20}{784}$ \\
+\addlinespace
+1D Interacting Ising (zero-oracle benchmark) & \id{candidate_e_unconditional_full_hamiltonian_theorem} & All $(g,h) \in [\frac{15}{128},\frac{16}{128}]\times$ $[\frac{47}{128},\frac{48}{128}]$, even $\ell \ge 64$ & \textbf{None} (self-contained in Lean~4) & $E_1 - E_0 \le \frac{1}{20}e^{-\frac{\log 20}{128}\ell}$, $E_i - E_1 > \frac{\log 8}{48}$ ($i \ge 2$) \\
+\addlinespace
+2D TFIM Torus (zero-oracle 2D benchmark) & \id{ising_2d_unconditional_rectangle_charpoly_gap} & All $|J_x|,|J_y|\le \frac{1}{192}$, even $L \times L$ ($L \ge 2$) & \textbf{None} (self-contained, data-free closure) & Simple ground energy; $\gamma_L > \frac{\log 2}{5} \approx 0.138629$ \\
+\bottomrule
+\end{tabularx}
+\caption{Summary of the concrete Hamiltonian theorems in \id{haldane-purity-lean}. All abstract transfer-operator and signed-sector-moment hypotheses have been eliminated inside Lean~4. A tight-radius corollary (\id{candidate_a_physical_spin1_interval_charpoly_gap_896}) also preserves $L \ge 896$ and $\gamma_L > \frac{\log 20}{368}$ across $D \in [0.2499999, 0.2500001]$. The spin-1 theorems target the non-perturbative Haldane phase; the two Ising theorems serve as zero-oracle formal-verification benchmarks validating the 1D symmetry-twist and 2D bootstrap libraries.}
+\label{tab:summary}
+\end{table}
+
+\paragraph{Honest verification and physics boundary.}
+Table~\ref{tab:summary} states both the mathematical verification boundary and the physical scope of each result.
+For the spin-1 theorems ($D = 1/4$, the continuous interval around $D = 1/4$, and $D = 0$), \emph{every} abstract mathematical step---including the concrete $3^L\times 3^L$ physical spin-1 Hamiltonian, explicit single-site unitary equivalence to the textbook $S^z$ weight basis (yielding many-body equivalence via tensoring), finite-$M$ transfer matrix, Trotter convergence, subsequential signed-moment convergence under a uniform $\ell^2$ bound, exact $D_4$ and $D_2$ symmetry projections, nonnegative polynomial filters (sixteen degree-14 filters for $D = 1/4$; degree-12 filters for $D = 0$), capped-mass residual bounds, temperature transfer, operator-monotone coupling transport, coupled bootstrap rounds, Rayleigh--Ritz criterion, and \id{charpoly.roots} multiplicity extraction---is proved unconditionally in Lean~4.
+The \emph{only} remaining premises of the spin-1 theorems are the concrete finite physical thermal trace enclosures on $Z_{\mathrm{spin1}}$ ($n \le 14$ for $D = 1/4$; $n \le 12$ for $D = 0$) and a single finite variational Rayleigh vector ($\psi$ at $L=112$ or $L=72$).
+Conversely, the 1D interacting Ising and 2D transverse-field Ising theorems require \emph{zero} external numerical inputs, but operate in perturbative regimes where existence of a spectral gap is already classically known (via cluster expansions and perturbative stability results~\cite{lapalevin2021}); their contribution is formal-verification validation of the reusable 1D symmetry-twist and 2D Lie--Trotter purity-bootstrap infrastructure.
+
+\section{General Purity-Bootstrap Library in Lean 4}
+Our core reusable framework comprises six modules:
+\begin{itemize}[leftmargin=1.6em,itemsep=2pt]
+  \item \id{PurityBootstrap/Basic.lean} and \id{OneD.lean}: Formalize 1D spatial purity $S(L, b) = Z(2L, b)/Z(L, b)^2$ and thermal (temporal) purity $T(L, b) = Z(L, 2b)/Z(L, b)^2 = \sum_i p_i^2$ for any \id{SpectralSystem1D}, proving contraction, monotonicity, dyadic interpolation, and uniform spectral gap extraction: given \emph{both} seed bounds $S(n_0, b_0) \ge 1 - u_0$ and $T(2n_0, b_0) \ge 1 - u_0$ together with the bootstrap coefficient inequalities (parametrized by $u_0$ and $C$), every finite even ring $L \ge n_0$ has a unique ground state and uniform gap $\gamma_L > \frac{\log(1/(C u_0))}{b_0}$. For Candidate~A, $(n_0, b_0) = (896, 368)$ with $u_0 = 1/100$ and $C = 5$, yielding $\gamma_L > \frac{\log 20}{368}$.
+  \item \id{PurityBootstrap/HigherDim.lean}: Formalizes Grover's general-$d$ quadratic contraction and 2D $(2\times)$ purity bootstrap~\cite{grover2026}.
+  \item \id{PurityBootstrap/SymmetryTwists.lean}: Formalizes $\Z_2$ symmetry-twist multiplet splitting bounds (used in Candidate~E) as well as Grover's 2D volume-law $4$th-power step for future higher-dimensional applications.
+  \item \id{PurityBootstrap/ExactCertificates.lean} and \id{MomentInit.lean}: Formalize exact upward-rounded rational bootstrap iterations together with the capped-mass lemma (\id{capped_mass_tsum}) and nonnegative polynomial-filter bound (\id{polynomial_filter_tsum}) linking raw moments to leading-eigenvalue enclosures.
+\end{itemize}
+
+\section{Zero-Oracle 1D Benchmark: Interacting Ising Multiplet Theorem (Candidate~E)}
+Consider the 1D interacting transverse-field Ising ring on $\ell = 2m$ qubits (Grover~\cite{grover2026}, Pauli normalization $J = 1$):
+\begin{equation}
+  H_\ell(g, h) \;=\; -\sum_{i=0}^{\ell-1} Z_i Z_{i+1} \;-\; g \sum_{i=0}^{\ell-1} X_i X_{i+1} \;-\; h \sum_{i=0}^{\ell-1} X_i,
+  \label{eq:ising}
+\end{equation}
+with global spin-flip symmetry $P = \bigotimes_{i=0}^{\ell-1} X_i$ partitioning the spectrum into $+1$ and $-1$ parity sectors.
+
+\begin{theorem}[Zero-Oracle 2D Coupling-Rectangle Multiplet Theorem]
+\label{thm:candE}
+In \id{candidate_e_unconditional_full_hamiltonian_theorem}, for every coupling pair $(g, h) \in [\frac{15}{128}, \frac{16}{128}] \times [\frac{47}{128}, \frac{48}{128}]$ and every finite even ring length $\ell = 2m \ge 64$, let $E_0(\ell) \le E_1(\ell) \le \dots \le E_{2^\ell - 1}(\ell)$ be all $2^\ell$ eigenvalues of $H_\ell(g, h)$ (proved equal as a multiset to \id{H_full.charpoly.roots}). Then:
+\begin{enumerate}[leftmargin=1.8em,itemsep=2pt]
+  \item $E_0(\ell)$ is the unique ground energy of the $+1$ parity sector ($P = +1$) and $E_1(\ell)$ is the unique ground energy of the $-1$ parity sector ($P = -1$);
+  \item the low-energy doublet is exponentially narrow:
+  \[
+    0 \;\le\; E_1(\ell) - E_0(\ell) \;\le\; \frac{1}{20} \exp\!\left(-\frac{\log 20}{128}\,\ell\right);
+  \]
+  \item every higher excitation is uniformly gapped above the doublet:
+  \[
+    E_i(\ell) - E_1(\ell) \;>\; \frac{\log 8}{48} \;\approx\; 0.0433217 \qquad \forall\, 2 \le i < 2^\ell.
+  \]
+\end{enumerate}
+\end{theorem}
+
+\paragraph{Proof architecture inside Lean~4.}
+Three ingredients make this 1D benchmark completely self-contained inside Lean~4:
+(i) \id{LieTrotter.lean} and \id{IsingTrotter.lean} establish exact 3-way Lie--Trotter convergence and twisted checkerboard positive-semidefinite Gram transfer-matrix contractions for both untwisted and $P$-twisted partition functions, eliminating all abstract transfer-matrix hypotheses;
+(ii) \id{BlockGershgorin.lean} and \id{CandidateE/Corner*.lean} execute exact rational block-Gershgorin upper enclosures at all four corners of the coupling rectangle at $\ell = 8$, paired with an exact integer $\chi = 2$ periodic MPS Rayleigh witness at $\ell = 16$ (\id{IsingMPS.lean}) and log-convexity of sector traces across the rectangle (\id{MatrixTools.lean}, \id{CandidateE/RectangleTheorem.lean}), establishing $Q_+(8, 6) \ge 877/1000$ uniformly across the rectangle;
+(iii) three exact upward-rounded 1D coupled purity-bootstrap rounds advance $(8, 6) \to (64, 48)$ and extract the doublet and gap bounds via \id{SymmetryTwists.lean}.
+
+\section{Eliminating All Abstract Transfer Hypotheses for Spin-1 Chains}
+For spin-1 chains, the purity bootstrap requires both an even-length \id{SpectralSystem1D} representation and \emph{signed} sector-moment expansions holding across both even and odd ring lengths $n \ge 4$.
+Rather than postulating an infinite-dimensional compact transfer operator on $L^2$-path space, we build a completely elementary, finite-dimensional, kernel-verified transfer limit in five modules: \id{Spin1Hamiltonian.lean}, \id{Spin1Compactness.lean}, \id{Spin1Transfer.lean}, \id{Spin1PhysicalGap.lean}, and \id{Spin1Interval.lean}.
+
+\subsection{Concrete Physical Spin-1 Hamiltonian and Weight-Basis Unitary Equivalence}
+In \id{Spin1Hamiltonian.lean}, we work in the real Cartesian spin-1 basis $\R^3$ with skew-symmetric generators $(G_\alpha)_{ij} = \varepsilon_{\alpha ij}$ ($\alpha \in \{0,1,2\}$) and diagonal anisotropy matrix $\mathrm{SzSq\_mat} = \diag(1, 1, 0)$.
+We construct an explicit $3 \times 3$ complex matrix $U_{\mathrm{cart}\to sz}$ and prove in Lean~4:
+\begin{itemize}[leftmargin=1.6em,itemsep=2pt]
+  \item \id{U_cart_to_sz_unitary}: $U_{\mathrm{cart}\to sz} U_{\mathrm{cart}\to sz}^\dagger = U_{\mathrm{cart}\to sz}^\dagger U_{\mathrm{cart}\to sz} = I_3$;
+  \item \id{U_cart_to_sz_conj_S}: $U_{\mathrm{cart}\to sz}(-i G_\alpha)U_{\mathrm{cart}\to sz}^\dagger = S^\alpha$ for all $\alpha \in \{x, y, z\}$ in the standard weight basis $(+1, 0, -1)$;
+  \item \id{U_cart_to_sz_conj_SzSq}: $U_{\mathrm{cart}\to sz}\,\mathrm{SzSq\_mat}\,U_{\mathrm{cart}\to sz}^\dagger = (S^z)^2 = \diag(1, 0, 1)$.
+\end{itemize}
+Because $(-i)^2 = -1$, each Heisenberg bond $\sum_\alpha S^\alpha_j \otimes (g S^\alpha g^\mathsf{T})_k$ equals $-\sum_\alpha (G_\alpha)_j \otimes (g G_\alpha g^\mathsf{T})_k$ in the real Cartesian basis, and tensoring $U_{\mathrm{cart}\to sz}$ across all $n$ sites yields the many-body unitary equivalence to the textbook weight-basis ring Hamiltonian.
+For any $n \ge 3$, anisotropy $D \in \R$, and $3 \times 3$ real matrix $g$, the concrete $3^n \times 3^n$ real symmetric Hamiltonian is
+\begin{equation}
+  H_{\mathrm{spin1}}(n, D, g) \;=\; \sum_{j=0}^{n-2} h_{j, j+1}(I) \;+\; h_{n-1, 0}(g) \;+\; D \sum_{j=0}^{n-1} (\mathrm{SzSq\_mat})_j,
+  \label{eq:Hspin1}
+\end{equation}
+where $g$ rotates only site~$0$ of the wrap-around bond $(n-1, 0)$.
+The concrete physical partition function with energy shift $a \in \R$ at inverse temperature $b > 0$ is
+\[
+  Z_{\mathrm{spin1}}(n, D, a, g, b) \;=\; \Tr\!\Big(\exp\big(-b\,(H_{\mathrm{spin1}}(n, D, g) + a n I)\big)\Big),
+\]
+proved equal to $\sum_{k \in (\mathrm{Fin}\,3)^n} e^{-b(E_k + a n)}$ (\id{Z_spin1_eq_sum_exp}).
+
+\subsection{Finite-$M$ No-Collision Equivariant Transfer Matrix and Trotter Limit}
+Fix $M \ge 1$ and $\tau = b / M$. On the finite configuration space $\mathrm{Word}(M) = (\mathrm{Fin}\,4)^M$ (where index $0$ represents an unoccupied bond slice and indices $1, 2, 3$ carry the $\R^3$ vector label $\alpha$), define the single-slice $3 \times 3$ matrix kernel
+\[
+  \Phi_\tau(u, v) \;=\; \begin{cases}
+    I_3 & \text{if } u = 0, v = 0, \\
+    \sqrt{\tau}\, G_{v-1} & \text{if } u = 0, v \in \{1,2,3\}, \\
+    \sqrt{\tau}\, G_{u-1} & \text{if } u \in \{1,2,3\}, v = 0, \\
+    0 & \text{if } u, v \in \{1,2,3\},
+  \end{cases}
+\]
+and the $4^M \times 4^M$ real matrix $K_M(D, a, b)$ with entries
+\[
+  (K_M)_{w, w'} \;=\; \Tr_3\!\left(\prod_{t=0}^{M-1} \Big(e^{-\tau V(D, a)} \, \Phi_\tau(w_t, w'_t)\Big)\right), \qquad V(D, a) = D\,\mathrm{SzSq\_mat} + a I_3.
+\]
+We define the predicate \id{IsSpin1Rot g} requiring $g$ to be orthogonal and covariant with the generators ($g G_\alpha g^\mathsf{T} = \sum_\beta g_{\beta\alpha} G_\beta$), and \id{IsAxialRot g} additionally requiring preservation of $\mathrm{SzSq\_mat}$. This zero-collision construction enjoys four exact properties proved in \id{Spin1Transfer.lean}:
+\begin{enumerate}[leftmargin=1.8em,itemsep=2pt]
+  \item \textbf{Exact real symmetry:} $K_M^\mathsf{T} = K_M$ (\id{K_mat_transpose}), because $\Phi_\tau(v, u) = \Phi_\tau(u, v)$ preserves the time-ordered product.
+  \item \textbf{Exact $O(2)/SO(3)$-equivariance:} With $U_M(g) = (1 \oplus g)^{\otimes M}$ on $\mathrm{Word}(M)$, we prove $U_M(g) K_M = K_M U_M(g)$ (\id{K_mat_comm_U}) for any $g$ satisfying \id{IsSpin1Rot g} and preserving the onsite exponential $e^{-\tau V(D, a)}$---in particular, every axial rotation $g$ satisfying \id{IsAxialRot g} (including $R_z(\pi/4)$, which pairs real irreducible sectors) at arbitrary $D$, and the cyclic axis permutation $C_3$ at $D = 0$.
+  \item \textbf{Exact cycle contraction and $O(1/M)$ Trotter limit:} For every $n \ge 3$ (even or odd), $M \ge 0$, and $g$ satisfying \id{IsSpin1Rot g}, pure finite-sum expansion gives $\Tr(K_M^n U_M(g)) = \Tr(T_{\mathrm{slice}}(M)^M)$ (\id{trace_K_pow_mul_U_eq_trace_T_slice_pow}), where $T_{\mathrm{slice}}(M) = I - \frac{b}{M}(H_{\mathrm{spin1}} + a n I) + O(1/M^2)$ in operator norm. By \id{tendsto_trace_pow_of_first_order} (\id{Spin1Compactness.lean}), for every $g$ satisfying \id{IsSpin1Rot g},
+  \[
+    \lim_{M \to \infty} \Tr(K_M^n U_M(g)) \;=\; Z_{\mathrm{spin1}}(n, D, a, g, b) \qquad (\forall\, n \ge 3,\; b > 0).
+  \]
+  \item \textbf{Uniform Hilbert--Schmidt bound:} Counting the $1 + 6 = 7$ nonzero single-slice label pairs and using $\|G_\alpha\|_\infty = 1$ yields the $M$-independent bound (\id{K_mat_hilbert_schmidt_le})
+  \[
+    \Tr(K_M^2) \;\le\; 9 \exp\!\big(2 b (|D| + |a| + 3)\big) \;=:\; C(D, a, b).
+  \]
+\end{enumerate}
+
+\subsection{Subsequential Signed-Moment Convergence and Real Symmetric Sector Projections}
+In \id{Spin1Compactness.lean}, \id{l2_seq_compact_moments} takes any family of finite real eigenvalue lists $\{f_{M, s, i}\}$ uniformly bounded in $\ell^2$ ($\sum_i f_{M,s,i}^2 \le C$), sorts each list by decreasing $|f_{M,s,i}|$ while preserving eigenvalue signs, pads with zeros, and applies Tychonoff sequential compactness on $[-\sqrt{C}, \sqrt{C}]^{\mathrm{Fin}\,k \times \N}$.
+The decreasing rearrangement gives $|f_{M,s,i}| \le \sqrt{C/(i+1)}$, hence the uniform tail estimate
+\[
+  \sum_{i \ge N} |f_{M,s,i}|^n \;\le\; C \left(\frac{C}{N+1}\right)^{(n-2)/2} \xrightarrow[N \to \infty]{} 0 \qquad (\forall\, n \ge 3),
+\]
+establishing subsequential convergence of all signed $n$-th moments ($n \ge 3$, even and odd) with absolutely summable $n$-th powers for the limit sequences.
+
+Working subspace-free on $P_s K_M P_s$ (which satisfies $\Tr((P_s K_M P_s)^n) = \Tr(P_s K_M^n)$ for $n \ge 1$ and $\Tr((P_s K_M P_s)^2) \le \Tr(K_M^2)$), \id{Spin1Transfer.lean} proves exact real symmetric idempotent decompositions:
+\begin{itemize}[leftmargin=1.6em,itemsep=2pt]
+  \item \textbf{$D_4 + R_z(\pi/4)$ for arbitrary $D$ (\id{spin1_D4_sector_moments}):} Six real projections $A_1, B_1, B_2, A_2, E_+, E_-$ with orthogonal conjugacies $B_1 \cong B_2$ (via $U_M(R_z(\pi/4))$) and $E_+ \cong E_-$ (via $U_M(R_z(\pi/2))$), giving four real sequences $\lambda_0, \lambda_1, \lambda_2, \lambda_3$ with absolutely summable $n$-th powers ($n \ge 4$) reproducing all four twisted traces $Z_{\mathrm{spin1}}(n, D, a, g, b)$ ($g \in \{I, R_z(\pi), R_x(\pi), R_z(\pi/2)\}$) via the exact character matrix in Table~\ref{tab:d4}.
+  \item \textbf{$D_2 \rtimes C_3$ for $D = 0$ (\id{spin1_D2_sector_moments}):} Cyclic axis permutation $U_M(C_3)$ equates the three nontrivial $D_2$ sectors, yielding two real sequences $\lambda_J, \lambda_N$ reproducing $Z_{\mathrm{spin1}}(n, 0, a, I, b) = J_n + 3 N_n$ and $Z_{\mathrm{spin1}}(n, 0, a, R_x, b) = J_n - N_n$ for all $n \ge 4$.
+  \item \textbf{Concrete \id{SpectralSystem1D} (\id{spin1SpectralSystem}):} \id{spin1_spatial_eigs} supplies a real sequence with absolutely summable fourth powers reproducing $Z_{\mathrm{spin1}}(n, D, a, I, b)$ for all $n \ge 4$, instantiating \id{SpectralSystem1D} unconditionally for any $D, a \in \R$.
+\end{itemize}
+
+\begin{table}[t]
+\centering
+\small
+\begin{tabular}{@{}lrrrr@{}}
+\toprule
+\textbf{Seam $g$} & $A_1$ ($\lambda_0$) & $B_1 \oplus B_2$ ($\lambda_1$) & $A_2$ ($\lambda_2$) & $E_+ \oplus E_-$ ($\lambda_3$) \\
+\midrule
+$I$ (\id{rotI}) & $+1$ & $+2$ & $+1$ & $+2$ \\
+$R_z(\pi)$ (\id{rotZ}) & $+1$ & $+2$ & $+1$ & $-2$ \\
+$R_x(\pi)$ (\id{rotX}) & $+1$ & $0$ & $-1$ & $0$ \\
+$R_z(\pi/2)$ (\id{rotF}) & $+1$ & $-2$ & $+1$ & $0$ \\
+\bottomrule
+\end{tabular}
+\caption{Exact real $D_4$ sector multiplicity matrix proved in \id{spin1_D4_sector_moments} and consumed by \id{CandidateA/Certificate.lean}.}
+\label{tab:d4}
+\end{table}
+
+\section{Physical Spin-1 Haldane Gap Theorems: Candidate~A, Continuous Interval, and Source~1}
+
+\begin{theorem}[Candidate~A Physical Spin-1 Haldane Gap]
+\label{thm:candA}
+In \id{candidate_a_physical_spin1_charpoly_gap_896}, let $a = 1.242818 = 1242818/10^6$ and $\varepsilon_{\mathrm{CA}} = 10^{-5}$. Suppose:
+\begin{enumerate}[leftmargin=1.8em,itemsep=2pt]
+  \item for every $4 \le n \le 14$, every seam $g \in \{\texttt{rotI}, \texttt{rotZ}, \texttt{rotX}, \texttt{rotF}\}$, and both $b \in \{31/2, 23\}$, the concrete physical trace $Z_{\mathrm{spin1}}(n, 1/4, a, g, b)$ lies within $\varepsilon_{\mathrm{CA}}$ of the corresponding rational table center in \id{CandidateA/Data.lean} (88 inequalities); and
+  \item there exists a nonzero real vector $\psi \in \R^{\mathrm{Spin1Cfg}\,112}$ satisfying the shifted Rayleigh inequality $\langle \psi, H_{\mathrm{spin1}}(112, 1/4, I)\psi \rangle + 112 a \|\psi\|_2^2 \le 0$.
+\end{enumerate}
+Then for \emph{every finite even ring length $L \ge 896$}, the characteristic polynomial roots multiset of the concrete $3^L \times 3^L$ matrix $H_{\mathrm{spin1}}(L, 1/4, I)$ decomposes as $E_0 ::_m \mathrm{rest}$ with $|\mathrm{rest}| + 1 = 3^L$ and
+\[
+  E - E_0 \;>\; \frac{\log 20}{368} \;\approx\; 0.00814058 \qquad (\forall\, E \in \mathrm{rest}).
+\]
+\end{theorem}
+
+\begin{theorem}[Continuous-Interval Spin-1 Haldane Gap Around $D = 1/4$]
+\label{thm:candA_interval}
+Under the exact same $D = 1/4$ premises as Theorem~\ref{thm:candA} (zero new thermal traces and zero new trial witnesses), \id{PurityBootstrap/Spin1Interval.lean} proves:
+\begin{enumerate}[leftmargin=1.8em,itemsep=2pt]
+  \item (\id{candidate_a_physical_spin1_interval_charpoly_gap_1792}) For \emph{every} continuous anisotropy $D \in [249999/10^6,\, 250001/10^6] = [0.249999, 0.250001]$ and \emph{every} finite even ring $L \ge 1792$, the roots multiset of $H_{\mathrm{spin1}}(L, D, I)$ decomposes as $E_0 ::_m \mathrm{rest}$ with $|\mathrm{rest}| + 1 = 3^L$ and $E - E_0 > \frac{\log 20}{736} \approx 0.00407029$ for all $E \in \mathrm{rest}$.
+  \item (\id{candidate_a_physical_spin1_interval_charpoly_gap_896}) On the tighter interval $D \in [2499999/10^7,\, 2500001/10^7]$, the original length threshold $L \ge 896$ and gap bound $E - E_0 > \frac{\log 20}{368} \approx 0.00814058$ are preserved identically.
+\end{enumerate}
+\end{theorem}
+
+\paragraph{Operator-monotone purity transport.}
+Because $H_{\mathrm{spin1}}(n, D, I) - H_{\mathrm{spin1}}(n, D_*, I) = (D - D_*) V_n$ where $V_n = \sum_{j=0}^{n-1} (\mathrm{SzSq\_mat})_j$ is diagonal with $0 \preceq V_n \preceq n I$, we prove an elementary 15-line operator-monotone thermal trace bound (\id{matZ_anti_of_le}: $A \preceq B \implies \Tr(e^{-b B}) \le \Tr(e^{-b A})$ for $b \ge 0$, directly from eigenbasis Jensen and basis completeness).
+Taking both signs of $D - D_*$ with $|D - D_*| \le h$ cancels per-site energy shifts and yields the uniform purity transport inequalities (\id{spin1_S_transport}, \id{spin1_T_transport}):
+\[
+  S(n, b; D) \;\ge\; e^{-2 n b h}\, S(n, b; D_*), \qquad T(m, b; D) \;\ge\; e^{-2 m b h}\, T(m, b; D_*).
+\]
+Transporting the center defect upper bounds $p_* = 0.1215302$ and $q_* = 0.1203214$ at $(n, b) = (56, 23)$ via $1 - x \le e^{-x}$ to radius $h = 10^{-6}$ gives initial defect bounds at most $0.1237932$ and $0.1248536$, which contract in five exact rational doubling rounds (\id{decide +kernel}) to at most $0.0016762$ and $0.0001751$ (both $< 1/100$) at $(1792, 736)$; restarting the $D$-parametric bootstrap on \id{spin1SpectralSystem} at $(D, a)$ immediately yields Theorem~\ref{thm:candA_interval}(1) (and four rounds at $h = 10^{-7}$ yield defect bounds at most $0.0061353$ and $0.0011355$, both $< 1/100$, at $(896, 368)$).
+
+\begin{theorem}[Source~1 Physical Spin-1 Haldane Gap]
+\label{thm:source1}
+In \id{source1_physical_spin1_charpoly_gap_2304}, let $a_1 = 700741/500000$ and $\varepsilon_{\mathrm{S1}} = 30/10^6$. Given the 18 concrete physical trace enclosures on $Z_{\mathrm{spin1}}(n, 0, a_1, g, 49/4)$ ($4 \le n \le 12$, $g \in \{\texttt{rotI}, \texttt{rotX}\}$) and a nonzero real vector $\psi \in \R^{\mathrm{Spin1Cfg}\,72}$ with $\langle \psi, H_{\mathrm{spin1}}(72, 0, I)\psi \rangle + 72 a_1 \|\psi\|_2^2 \le 0$, for every finite even $L \ge 2304$ the roots multiset of $H_{\mathrm{spin1}}(L, 0, I)$ decomposes as $E_0 ::_m \mathrm{rest}$ with $|\mathrm{rest}| + 1 = 3^L$ and $E - E_0 > \frac{\log 20}{784}$ for every $E \in \mathrm{rest}$.
+\end{theorem}
+
+\paragraph{Inside Lean~4 vs.\ external numerical certification for Candidate~A.}
+Inside Lean~4 (\id{CandidateA/Data.lean}, \id{Certificate.lean}), all 16 degree-14 nonnegative polynomial filters are checked in the kernel via \id{decide +kernel}, combined with the exact $46/31$ temperature-transfer temporal purity lemma ($31/2 \to 23$) and four upward-rounded coupled purity-bootstrap rounds $(56, 23) \to (896, 368)$ yielding the $(S(896, 368), T(1792, 368))$ seed pair with $u_0 = 1/100, C = 5$.
+The finite numerical inputs are certified externally by three standalone scripts:
+\begin{itemize}[leftmargin=1.6em,itemsep=2pt]
+  \item \textbf{7-site open-chain spectral lower bound (\id{scripts/certify_open7_shift.py}):} On the 7-site open window with onsite weight $3/14 = (6/7)(1/4)$ (so summing overlapping windows counts each bond 6 times and each onsite term 7 times), the script computes a floating-point Cholesky proposal of $A - 2I$ across $S^z$ blocks $M = 0\ldots 7$ (covering $M < 0$ by spin-flip symmetry, all 2{,}187 states), rounds it to integers, and certifies $A \succ I \succ 0$ via an exact overflow-guarded \id{int64} residual bound (worst $\|R\|_\infty = 1{,}216{,}644{,}908 < 2^{40}$). This yields $H_n(g) + \frac{21}{16}n I \succeq \frac{n}{336}I \succ 0$ for every $n \ge 7$ and every seam $g \in \{I, R_z, R_x, R_4\}$.
+  \item \textbf{All 88 raw thermal trace enclosures (\id{scripts/verify_candidate_a_all88.py}):} Raw integer Chebyshev totals are produced using 128-bit integer recurrence arithmetic and 256-bit accumulation with zero floating-point operations and zero truncated states (\id{chebyshev_enclose.cpp}, \id{chebyshev_enclose_rx.cpp}, \id{chebyshev_enclose_cuda.cu}; bit-for-bit CPU/GPU matched through $n = 11$, with 64/88 totals independently replayed on CPU, numerical full-matrix diagonalization cross-checks at $n = 4, 5, 6$, and rigorous direct Arb matrix-exponential checks at $n = 4$). The standalone stdlib-only exact rational verifier reads archived \id{W_int} totals and \id{CandidateA/Data.lean} centers, certifying all 88 rational intervals with worst-case endpoint distance $1.245 \times 10^{-6} < 10^{-5}$ (at $n = 6, I, b = 23$; $\le 3.211 \times 10^{-8}$ at $n = 14$), leaving an 87.55\% safety margin.
+  \item \textbf{$L = 112$ variational trial witness (\id{scripts/check_trial.py}):} Encloses the periodic $\chi = 32$ two-site integer MPS Rayleigh quotient per site in 160-bit Arb arithmetic within $[-1.242820131121, -1.242820131120] < -1.242818$. Writing the Cartesian-basis complex vector as $u + i v$ for the real symmetric shifted matrix $H_{\mathrm{shifted}}$ gives $\langle u+iv, H_{\mathrm{shifted}}(u+iv)\rangle = u^\mathsf{T} H_{\mathrm{shifted}} u + v^\mathsf{T} H_{\mathrm{shifted}} v < 0$, guaranteeing a nonzero real component satisfying Lean's real-vector Rayleigh premise.
+\end{itemize}
+
+\section{Zero-Oracle 2D Benchmark: Transverse-Field Ising Square Torus}
+To validate our higher-dimensional purity-bootstrap module (\id{HigherDim.lean}, generalizing Grover~\cite{grover2026}, Sec.~II to side-length cutoff $L \ge 2$) end-to-end on a concrete 2D quantum Hamiltonian with zero external numerical inputs, we add three self-contained modules (\id{Ising2DTrotter.lean}, \id{Ising2DSeed.lean}, \id{Ising2DGap.lean}) whose import closure is entirely free of 1D certificate tables.
+Consider the concrete $2^{L^2} \times 2^{L^2}$ 2D transverse-field Ising Hamiltonian on an even $L \times L$ torus with positive-direction periodic bonds (counted twice per undirected pair at $L = 2$ and yielding the standard simple-edge square torus for every even $L \ge 4$):
+\[
+  H_{\mathrm{2d}}(L, L, J_x, J_y) \;=\; -\sum_{v} X_v \;-\; \sum_{v} \bigl(J_x Z_v Z_{v+\hat{x}} + J_y Z_v Z_{v+\hat{y}}\bigr).
+\]
+In \id{Ising2DTrotter.lean}, we express $Z_a(L_x, L_y, b) = e^{-b a L_x L_y} \Tr(e^{-b H_{\mathrm{2d}}})$ as the $M \to \infty$ limit of a single 3D classical Ising sum $Z_M$ (strictly positive history weights for $b > 0, M \ge 1$) admitting the temporal Lie--Trotter trace $\Tr[(DK)^M]$ and two exact real symmetric spatial transfer cuts $\Tr(T_x^{L_x})$ and $\Tr(T_y^{L_y})$.
+In \id{Ising2DSeed.lean}, we prove the exact $2 \times 2$ dimer midpoint decomposition $H_{\mathrm{2d}}(2,2,J_x,J_y) + 4I = \frac{1}{2}(A_x + A_y)$, compute the exact two-qubit dimer trace $F_b(J)$ algebraically via commuting involutions, establish the symbolic all-ones Rayleigh lower bound $1 \le Z_1(L_x, L_y, b)$ for all $L_x, L_y \ge 2, b > 0$, and certify $F_5(J)^{16} \le 98/97$ for $|J| \le 1/192$ in rational arithmetic---yielding the 2D cube seed $Z_1(4,4,10)/Z_1(2,2,5)^8 \ge 97/98$.
+Passing finite-$M$ spatial Gram inequalities to $M \to \infty$ yields \id{ising_2d_unconditional_rectangle_charpoly_gap}: for every $|J_x|, |J_y| \le 1/192$ and every finite even $L \ge 2$, the roots multiset of $H_{\mathrm{2d}}(L, L, J_x, J_y)$ decomposes as $E_0 ::_m \mathrm{rest}$ with $|\mathrm{rest}| + 1 = 2^{L^2}$ and $E - E_0 > \frac{\log 2}{5} \approx 0.138629$ for all $E \in \mathrm{rest}$.
+While existence of a gap in this weak-coupling regime is classically known from perturbative cluster expansions, the theorem establishes a complete, kernel-checked 2D Lie--Trotter purity-bootstrap blueprint ready for non-perturbative 2D models.
+
+\section{Kernel Hygiene, Adversarial Auditing, and Reproducibility}
+The fail-closed audit script \id{scripts/check_axioms.lean} verifies that:
+\begin{enumerate}[leftmargin=1.8em,itemsep=2pt]
+  \item all 29 listed project modules are imported into the checked environment;
+  \item zero \id{.axiomInfo} declarations exist across all imported project modules (even unused); and
+  \item every one of the 1{,}781 project theorem constants (1{,}468 under \id{PurityBootstrap.*}) depends strictly on a subset of \id{[propext, Classical.choice, Quot.sound]}---which rules out \id{sorryAx} and \id{Lean.ofReduceBool} (\id{native_decide}) for every audited theorem.
+\end{enumerate}
+In addition, the repository underwent seven rounds of independent adversarial auditing using Codex (\id{gpt-6.2-astra}, high reasoning effort), including independent compilation of the CPU Chebyshev builders to confirm exact \id{rotF} seam orientation against $H_{\mathrm{spin1}}$ (max discrepancy $\le 4.5 \times 10^{-15}$ vs.\ $2$ under reversed twist \id{rotF}$^\mathsf{T}$), independent regeneration of 40/88 $D=1/4$ totals and 14/18 $D=0$ totals, replay of both $L=112$ and $L=72$ variational trials, exact entry-by-entry comparison of 4{,}352 matrix entries of $H_{\mathrm{2d}}$ against independent Pauli constructions, independent verification of the coupling-transport bounds in \id{Spin1Interval.lean}, individual \id{leanchecker} runs on the spin-1 and 2D modules, and verification of the source-file inventory and citations.
+
+All source code, archived integer Chebyshev totals, and exact verifiers are publicly available at \url{https://github.com/rs9io/haldane-purity-lean} and reproduce cleanly from the repository root:
+\begin{verbatim}
+lake build
+lake env lean scripts/check_axioms.lean
+python3 -O scripts/certify_open7_shift.py
+python3 -O scripts/verify_candidate_a_all88.py
+python3 -O scripts/check_trial.py   # requires python-flint
+\end{verbatim}
+
+\section{Related Work and Outlook}
+Our formalization builds directly on the finite-temperature purity bootstrap of~\cite{openai2026haldane} and the symmetry-twist and higher-dimensional extensions of Grover~\cite{grover2026}.
+Independently, Lu~\cite{lu2026} formalized a finite-Gram/Trotter unconditional Lean~4 theorem for a mixed-field Ising chain and reported improved finite-input isotropic spin-1 gap bounds ($\gamma_L > 0.0729$ for even $L \ge 36$) together with a $D = 4$ single-ion anisotropy example.
+Earlier analytic stability of ground-state degeneracy and exponentially small splitting under weak symmetric perturbations was proved by Lapa and Levin~\cite{lapalevin2021}, while Tasaki~\cite{tasaki2026}---using the analytic machinery and numerical inputs of~\cite{openai2026haldane}---proved uniqueness among translation-invariant infinite-chain ground states for sufficiently small $|D|$, showing that this state is gapped and continuous in $D$, without an explicit finite-$D$ certificate at $D = 1/4$.
+
+Two natural next steps follow from the verified infrastructure in \id{haldane-purity-lean}: (i) widening the certified continuous interval around $D = 1/4$ and extending the pipeline deeper into the non-perturbative Haldane phase toward $D = 0.50$ and the Haldane-to-large-$D$ transition ($D_c \approx 0.968$); and (ii) investigating non-perturbative 2D quantum spin models (such as frustrated spin bilayers and honeycomb AKLT models) on top of our verified 2D purity-bootstrap modules.
+
+\begin{thebibliography}{9}
+\bibitem{openai2026haldane}
+OpenAI, \emph{The periodic spin-one Haldane gap}, preprint, September 24, 2026.
+
+\bibitem{grover2026}
+T.~Grover, \emph{Extensions of the Haldane gap proof: higher dimensions, near degeneracy, fermions and tensor-network states}, \texttt{arXiv:2611.07400}, 2026.
+
+\bibitem{lu2026}
+S.~Lu, \emph{Bridging Gaps with Tensor Networks: From the Haldane Gap and Beyond}, \texttt{arXiv:2611.11049}, 2026.
+
+\bibitem{lapalevin2021}
+M.~F.~Lapa and M.~Levin, \emph{Stability of ground state degeneracy to long-range interactions}, \texttt{arXiv:2107.11396}, 2021.
+
+\bibitem{tasaki2026}
+H.~Tasaki, \emph{On the uniqueness of translation-invariant ground states of the $S=1$ Heisenberg and $J$--$D$ antiferromagnetic chains}, \texttt{arXiv:2610.34330v2}, 2026.
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,12 @@
+.lake/
+.venv/
+__pycache__/
+*.pyc
+scripts/chebyshev_enclose
+scripts/chebyshev_enclose_rx
+scripts/chebyshev_enclose_cuda
+round2_audit/
+round3_audit/
+ROUND2_AUDIT_EVIDENCE.zip
+sources/
+.DS_Store

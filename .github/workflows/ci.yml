@@ -1,0 +1,64 @@
+name: Lean 4 & Exact Certificate CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  verify-lean-and-certificates:
+    name: Build Lean 4, Axiom Audit & All Candidate A Verifiers
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install elan and Lean toolchain
+        run: |
+          set -euo pipefail
+          curl -sSf https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          rm -f elan-init.sh
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch Mathlib prebuilt oleans and build all 29 Lean 4 modules
+        run: |
+          set -euo pipefail
+          lake exe cache get
+          lake build
+
+      - name: Run fail-closed Lean 4 axiom and module audit
+        run: |
+          set -euo pipefail
+          lake env lean scripts/check_axioms.lean
+
+      - name: Verify Candidate A 88/88 thermal enclosures (pure integer/rational, stdlib only)
+        run: |
+          set -euo pipefail
+          python3 -O scripts/verify_candidate_a_all88.py
+
+      - name: Set up Python environment for open7 Cholesky and 160-bit Arb L=112 trial verifiers
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install numpy and python-flint
+        run: |
+          set -euo pipefail
+          python -m venv .ci-venv
+          .ci-venv/bin/pip install --upgrade pip
+          .ci-venv/bin/pip install numpy python-flint
+
+      - name: Verify Candidate A 7-site open-chain lower bound (exact int64 residual)
+        run: |
+          set -euo pipefail
+          .ci-venv/bin/python -O scripts/certify_open7_shift.py
+
+      - name: Verify Candidate A L=112 chi=32 periodic MPS trial witness (160-bit Arb)
+        run: |
+          set -euo pipefail
+          .ci-venv/bin/python -O scripts/check_trial.py
